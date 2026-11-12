@@ -1,22 +1,990 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>S1ivker — Game QA Tester & Open-Source Contributor</title>
-  <style>
-    body { font-family: sans-serif; background: #0d1117; color: #c9d1d9; max-width: 650px; margin: 60px auto; padding: 20px; line-height: 1.6; }
-    h1 { color: #58a6ff; }
-    a { color: #58a6ff; text-decoration: none; margin-right: 15px; }
-    .tag { background: #21262d; padding: 4px 10px; border-radius: 6px; font-size: 14px; display: inline-block; margin-bottom: 10px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S1ivker | Indie Dev & 3D Artist</title>
+    <meta name="description" content="Portfolio of S1ivker: Indie game developer (Unity, Godot), 3D modeler, animator, and creator of the SCity Discord bot. Esports background in Fortnite, Rust, CS, and osu!.">
+    <meta property="og:title" content="S1ivker | Indie Dev & 3D Artist">
+    <meta property="og:description" content="Portfolio of S1ivker: Indie game developer (Unity, Godot), 3D modeler, animator, and creator of the SCity Discord bot. Esports background in Fortnite, Rust, CS, and osu!.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://s1ivker.github.io">
+    <meta property="og:image" content="avatar.png">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "S1ivker",
+      "url": "https://s1ivker.github.io",
+      "jobTitle": "Indie Game Developer",
+      "knowsAbout": ["Unity", "Godot", "3D Modeling", "Animation", "Discord Bot Developer", "Esports", "Art"],
+      "sameAs": [
+        "https://steamcommunity.com/id/s1ivker",
+        "https://www.twitch.tv/s1ivker/about",
+        "https://github.com",
+        "https://discord.gg/scity"
+      ]
+    }
+    </script>
+    <style>
+        :root {
+            --bg-color: #070b14;
+            --card-bg: rgba(12, 22, 45, 0.65);
+            --neon-blue: #00e5ff;
+            --neon-glow: 0 0 15px rgba(0, 229, 255, 0.4);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --danger-red: #ff3333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-main);
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(7, 11, 20, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--neon-blue);
+            text-shadow: var(--neon-glow);
+            letter-spacing: 2px;
+        }
+
+        .lang-switch {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 229, 255, 0.05);
+            padding: 0.3rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn:hover {
+            color: var(--neon-blue);
+        }
+
+        .lang-btn.active {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: var(--neon-glow);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 5%;
+        }
+
+        section {
+            padding: 6rem 0;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .avatar-container {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(135deg, var(--neon-blue), transparent, var(--neon-blue));
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+            margin-bottom: 1.5rem;
+            position: relative;
+            animation: pulseBorder 3s infinite alternate;
+        }
+
+        @keyframes pulseBorder {
+            0% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
+            100% { box-shadow: 0 0 40px rgba(0, 229, 255, 0.6); }
+        }
+
+        .avatar-container img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #0a1226;
+        }
+
+        .avatar-fallback {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #0a1226;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--neon-blue);
+            text-shadow: var(--neon-glow);
+            display: none;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .hero h1 span {
+            color: var(--neon-blue);
+            text-shadow: var(--neon-glow);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .social-quick {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--neon-blue);
+            background: rgba(0, 229, 255, 0.05);
+            color: var(--neon-blue);
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+            box-shadow: var(--neon-glow);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+        }
+
+        .btn-primary:hover {
+            background: transparent;
+            color: var(--neon-blue);
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-align: center;
+            color: var(--text-main);
+        }
+
+        h2::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background: var(--neon-blue);
+            margin: 1rem auto 0;
+            box-shadow: var(--neon-glow);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 229, 255, 0.15);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 229, 255, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.1);
+            transform: translateY(-5px);
+        }
+
+        .glass-card h3 {
+            font-size: 1.5rem;
+            color: var(--neon-blue);
+            margin-bottom: 1rem;
+        }
+
+        .glass-card p {
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .project-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .game-container {
+            background: #040810;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: var(--neon-blue);
+        }
+
+        .game-area {
+            height: 250px;
+            position: relative;
+            background: rgba(0, 229, 255, 0.02);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        .game-btn {
+            align-self: center;
+            padding: 0.6rem 1.5rem;
+            border-radius: 5px;
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .game-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+        }
+
+        .target {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 229, 255, 0.2);
+            border: 2px solid var(--neon-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .target-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--neon-blue);
+            animation: shrinkRing 1.5s linear forwards;
+        }
+
+        @keyframes shrinkRing {
+            0% { transform: scale(2); opacity: 0; }
+            20% { opacity: 1; }
+            100% { transform: scale(0.5); opacity: 1; }
+        }
+
+        .code-line {
+            position: absolute;
+            color: rgba(0, 229, 255, 0.2);
+            font-family: monospace;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(300px); }
+        }
+
+        .bug {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: var(--danger-red);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--danger-red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .bug:hover {
+            transform: scale(1.2);
+        }
+
+        .crash-bar {
+            width: 100%;
+            height: 10px;
+            background: #1a1a1a;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .crash-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--danger-red);
+            transition: width 0.3s;
+            box-shadow: 0 0 10px var(--danger-red);
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 229, 255, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 229, 255, 0.1);
+        }
+
+        .contact-item span {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: var(--neon-blue);
+            color: var(--bg-color);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            border-top: 1px solid rgba(0, 229, 255, 0.1);
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2, .games-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .hero p {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="tag">Game QA • UI/UX Testing • Localization</div>
-  <h1>S1ivker</h1>
-  <p>Independent Game QA Tester, UI/UX Bug Hunter, and Open-Source Gaming Contributor. Focused on playtesting indie builds, improving launcher workflows, and contributing to EN/ES/RU game localizations.</p>
-  <p>
-    <a href="https://github.com">GitHub</a>
-    <a href="https://crowdin.com">Crowdin</a>
-  </p>
+    <canvas id="bg-canvas"></canvas>
+
+    <header>
+        <div class="logo">S1IVKER</div>
+        <div class="lang-switch">
+            <button class="lang-btn active" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="es">ES</button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="avatar-container">
+                <img src="avatar.png" alt="S1ivker" onerror="this.style.display='none'; document.getElementById('avatar-fallback').style.display='flex';">
+                <div class="avatar-fallback" id="avatar-fallback">S1</div>
+            </div>
+            <h1 data-i18n="hero_greeting">Привет, я <span>S1ivker</span>!</h1>
+            <p data-i18n="hero_sub">Инди-разработчик, 3D-художник и просто крутой чел из индустрии.</p>
+            <div class="social-quick">
+                <a href="https://steamcommunity.com/id/s1ivker" target="_blank" class="btn" data-i18n="btn_steam">Steam</a>
+                <a href="https://discord.gg/scity" target="_blank" class="btn btn-primary" data-i18n="btn_discord">Discord</a>
+                <a href="https://www.twitch.tv/s1ivker/about" target="_blank" class="btn" data-i18n="btn_twitch">Twitch</a>
+            </div>
+        </section>
+
+        <section id="about" class="reveal">
+            <h2 data-i18n="about_title">Обо мне</h2>
+            <div class="grid-2">
+                <div class="glass-card">
+                    <h3 data-i18n="about_dev_title">Разработка и творчество</h3>
+                    <p data-i18n="about_dev_text">Я инди-разработчик на Unity и Godot, создаю игры и интерактивные проекты. Изучаю 3D-моделирование, делаю модели на заказ, а также работаю как аниматор и арт-художник (включая концепты скинов).</p>
+                </div>
+                <div class="glass-card">
+                    <h3 data-i18n="about_esports_title">Киберспорт и комьюнити</h3>
+                    <p data-i18n="about_esports_text">В прошлом активно участвовал в турнирах по Fortnite, Rust, CS, Virtual Regatta и osu! под разными тегами. Успел поработать в крутых командах разработчиков и игровых составах. Сейчас развиваю бота SCity и одноименное комьюнити.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="projects" class="reveal">
+            <h2 data-i18n="projects_title">Избранные проекты</h2>
+            <div class="projects-grid">
+                <div class="glass-card project-card">
+                    <div>
+                        <h3>SCity Bot & Community</h3>
+                        <p data-i18n="proj_scity_desc">Топовый Discord-бот и крутое комьюнити. Заходи, чтобы найти тиммейтов и пообщаться.</p>
+                    </div>
+                    <a href="https://discord.gg/scity" target="_blank" class="btn" data-i18n="btn_join">Зайти на сервер</a>
+                </div>
+                <div class="glass-card project-card">
+                    <div>
+                        <h3>Steam Profile Guide</h3>
+                        <p data-i18n="proj_steam_desc">Топовое руководство по оформлению профиля Steam (111+ оценок).</p>
+                    </div>
+                    <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=3786548323" target="_blank" class="btn" data-i18n="btn_view">Смотреть гайд</a>
+                </div>
+                <div class="glass-card project-card">
+                    <div>
+                        <h3>3D, Art & Game Dev</h3>
+                        <p data-i18n="proj_3d_desc">Разработка на Unity / Godot, 3D-моделирование, анимации и концепт-арт на заказ.</p>
+                    </div>
+                    <a href="https://discord.gg/scity" target="_blank" class="btn" data-i18n="btn_contact">Связаться</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="games" class="reveal">
+            <h2 data-i18n="games_title">Залипни на минуту</h2>
+            <div class="games-grid">
+                <div class="game-container">
+                    <div class="game-header">
+                        <span data-i18n="game1_title">osu! Кликер</span>
+                        <span>Combo: <span id="combo-counter">0</span></span>
+                    </div>
+                    <div class="game-area" id="reaction-game">
+                    </div>
+                    <button class="game-btn" id="start-reaction" data-i18n="btn_start">Начать</button>
+                </div>
+                <div class="game-container">
+                    <div class="game-header">
+                        <span data-i18n="game2_title">Поймай баг</span>
+                        <span>Score: <span id="bug-score">0</span></span>
+                    </div>
+                    <div class="game-area" id="bug-game">
+                        <div class="crash-bar"><div class="crash-fill" id="crash-fill"></div></div>
+                    </div>
+                    <button class="game-btn" id="start-bug" data-i18n="btn_start">Начать</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="reveal">
+            <h2 data-i18n="contact_title">Контакты</h2>
+            <div class="contact-grid">
+                <div class="glass-card contact-item">
+                    <a href="https://steamcommunity.com/id/s1ivker" target="_blank" style="text-decoration:none; color:var(--text-main); font-weight:bold;">Steam</a>
+                </div>
+                <div class="glass-card contact-item">
+                    <a href="https://www.twitch.tv/s1ivker/about" target="_blank" style="text-decoration:none; color:var(--text-main); font-weight:bold;">Twitch</a>
+                </div>
+                <div class="glass-card contact-item">
+                    <a href="https://github.com" target="_blank" style="text-decoration:none; color:var(--text-main); font-weight:bold;">GitHub</a>
+                </div>
+                <div class="glass-card contact-item">
+                    <a href="https://discord.gg/scity" target="_blank" style="text-decoration:none; color:var(--text-main); font-weight:bold;">Discord Server</a>
+                </div>
+                <div class="glass-card contact-item">
+                    <span>Discord: s1ivker</span>
+                    <button class="copy-btn" onclick="copyText('s1ivker')" data-i18n="btn_copy">Копировать</button>
+                </div>
+                <div class="glass-card contact-item">
+                    <span>Email: s1ivker090@gmail.com</span>
+                    <button class="copy-btn" onclick="copyText('s1ivker090@gmail.com')" data-i18n="btn_copy">Копировать</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 S1ivker. <span data-i18n="footer_text">Все права защищены.</span></p>
+    </footer>
+
+    <script>
+        const translations = {
+            ru: {
+                hero_greeting: "Привет, я <span>S1ivker</span>!",
+                hero_sub: "Инди-разработчик, 3D-художник и просто крутой чел из индустрии.",
+                btn_steam: "Steam",
+                btn_discord: "Discord",
+                btn_twitch: "Twitch",
+                about_title: "Обо мне",
+                about_dev_title: "Разработка и творчество",
+                about_dev_text: "Я инди-разработчик на Unity и Godot, создаю игры и интерактивные проекты. Изучаю 3D-моделирование, делаю модели на заказ, а также работаю как аниматор и арт-художник (включая концепты скинов).",
+                about_esports_title: "Киберспорт и комьюнити",
+                about_esports_text: "В прошлом активно участвовал в турнирах по Fortnite, Rust, CS, Virtual Regatta и osu! под разными тегами. Успел поработать в крутых командах разработчиков и игровых составах. Сейчас развиваю бота SCity и одноименное комьюнити.",
+                projects_title: "Избранные проекты",
+                proj_scity_desc: "Топовый Discord-бот и крутое комьюнити. Заходи, чтобы найти тиммейтов и пообщаться.",
+                btn_join: "Зайти на сервер",
+                proj_steam_desc: "Топовое руководство по оформлению профиля Steam (111+ оценок).",
+                btn_view: "Смотреть гайд",
+                proj_3d_desc: "Разработка на Unity / Godot, 3D-моделирование, анимации и концепт-арт на заказ.",
+                btn_contact: "Связаться",
+                games_title: "Залипни на минуту",
+                game1_title: "osu! Кликер",
+                game2_title: "Поймай баг",
+                btn_start: "Начать",
+                btn_copy: "Копировать",
+                contact_title: "Контакты",
+                footer_text: "Все права защищены."
+            },
+            en: {
+                hero_greeting: "Hey, I'm <span>S1ivker</span>!",
+                hero_sub: "Indie developer, 3D artist, and just a cool guy from the industry.",
+                btn_steam: "Steam",
+                btn_discord: "Discord",
+                btn_twitch: "Twitch",
+                about_title: "About Me",
+                about_dev_title: "Dev & Creative",
+                about_dev_text: "I'm an indie developer working with Unity and Godot, creating games and interactive projects. I study 3D modeling, do commissions, and work as an animator and artist (including skin concepts).",
+                about_esports_title: "Esports & Community",
+                about_esports_text: "In the past, I actively competed in tournaments for Fortnite, Rust, CS, Virtual Regatta, and osu! under various tags. I've worked with cool dev teams and rosters. Now I'm growing the SCity bot and its community.",
+                projects_title: "Featured Projects",
+                proj_scity_desc: "Top-tier Discord bot and an awesome community. Join to find teammates and hang out.",
+                btn_join: "Join Server",
+                proj_steam_desc: "Top Steam profile guide (111+ ratings).",
+                btn_view: "View Guide",
+                proj_3d_desc: "Unity / Godot dev, 3D modeling, animations, and concept art commissions.",
+                btn_contact: "Contact Me",
+                games_title: "Take a Break & Play",
+                game1_title: "osu! Clicker",
+                game2_title: "Catch the Bug",
+                btn_start: "Start",
+                btn_copy: "Copy",
+                contact_title: "Contacts",
+                footer_text: "All rights reserved."
+            },
+            es: {
+                hero_greeting: "¡Hola, soy <span>S1ivker</span>!",
+                hero_sub: "Desarrollador indie, artista 3D y simplemente un chico genial de la industria.",
+                btn_steam: "Steam",
+                btn_discord: "Discord",
+                btn_twitch: "Twitch",
+                about_title: "Sobre mí",
+                about_dev_title: "Desarrollo y Creatividad",
+                about_dev_text: "Soy desarrollador indie en Unity y Godot, creo juegos y proyectos interactivos. Estudio modelado 3D, hago modelos por encargo, y también trabajo como animador y artista (incluyendo conceptos de skins).",
+                about_esports_title: "Esports y Comunidad",
+                about_esports_text: "En el pasado participé activamente en torneos de Fortnite, Rust, CS, Virtual Regatta y osu! bajo diferentes tags. He trabajado con equipos de desarrollo y rosters geniales. Ahora estoy haciendo crecer el bot SCity y su comunidad.",
+                projects_title: "Proyectos Destacados",
+                proj_scity_desc: "Bot de Discord de primer nivel y una comunidad increíble. Únete para encontrar compañeros y pasar el rato.",
+                btn_join: "Unirse al Servidor",
+                proj_steam_desc: "Guía de perfil de Steam de primer nivel (111+ valoraciones).",
+                btn_view: "Ver Guía",
+                proj_3d_desc: "Desarrollo en Unity / Godot, modelado 3D, animaciones y arte conceptual por encargo.",
+                btn_contact: "Contáctame",
+                games_title: "Tómate un descanso y juega",
+                game1_title: "osu! Clicker",
+                game2_title: "Atrapa el Bug",
+                btn_start: "Empezar",
+                btn_copy: "Copiar",
+                contact_title: "Contactos",
+                footer_text: "Todos los derechos reservados."
+            }
+        };
+
+        let currentLang = 'ru';
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            document.documentElement.lang = lang === 'es' ? 'es' : lang;
+        }
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setLanguage(btn.getAttribute('data-lang'));
+            });
+        });
+
+        function copyText(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(currentLang === 'ru' ? 'Скопировано!' : currentLang === 'en' ? 'Copied!' : '¡Copiado!');
+            });
+        }
+
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let width, height;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (let i = 0; i < 70; i++) {
+            particles.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 1
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(0, 229, 255, 0.5)';
+            ctx.strokeStyle = 'rgba(0, 229, 255, 0.1)';
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > width) p.vx *= -1;
+                if (p.y < 0 || p.y > height) p.vy *= -1;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p.x - p2.x;
+                    let dy = p.y - p2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 120) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        let reactionActive = false;
+        let reactionTimeout;
+        let combo = 0;
+        let reactionScore = 0;
+        const reactionArea = document.getElementById('reaction-game');
+        const startReactionBtn = document.getElementById('start-reaction');
+        const comboCounter = document.getElementById('combo-counter');
+
+        function startReactionGame() {
+            if (reactionActive) return;
+            reactionActive = true;
+            combo = 0;
+            reactionScore = 0;
+            comboCounter.innerText = combo;
+            startReactionBtn.style.display = 'none';
+            reactionArea.innerHTML = '';
+            spawnTarget();
+        }
+
+        function spawnTarget() {
+            if (!reactionActive) return;
+            reactionArea.innerHTML = '';
+            
+            const target = document.createElement('div');
+            target.className = 'target';
+            
+            const areaRect = reactionArea.getBoundingClientRect();
+            const x = Math.random() * (areaRect.width - 100) + 50;
+            const y = Math.random() * (areaRect.height - 100) + 50;
+            
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+
+            const ring = document.createElement('div');
+            ring.className = 'target-ring';
+            target.appendChild(ring);
+
+            let clicked = false;
+
+            target.addEventListener('mousedown', () => {
+                if (clicked) return;
+                clicked = true;
+                const ringStyle = window.getComputedStyle(ring);
+                const transform = ringStyle.transform;
+                let scale = 1;
+                if (transform !== 'none') {
+                    const matrix = new DOMMatrix(transform);
+                    scale = matrix.a;
+                }
+                
+                if (scale > 0.4 && scale < 1.2) {
+                    combo++;
+                    reactionScore += 10 * combo;
+                } else {
+                    combo = 0;
+                }
+                comboCounter.innerText = combo;
+                target.remove();
+                clearTimeout(reactionTimeout);
+                reactionTimeout = setTimeout(spawnTarget, 200);
+            });
+
+            reactionArea.appendChild(target);
+
+            setTimeout(() => {
+                if (!clicked && reactionActive) {
+                    combo = 0;
+                    comboCounter.innerText = combo;
+                    target.remove();
+                    spawnTarget();
+                }
+            }, 1500);
+        }
+
+        startReactionBtn.addEventListener('click', startReactionGame);
+
+        let bugActive = false;
+        let bugScore = 0;
+        let crashLevel = 0;
+        let bugInterval, crashInterval;
+        const bugArea = document.getElementById('bug-game');
+        const startBugBtn = document.getElementById('start-bug');
+        const bugScoreEl = document.getElementById('bug-score');
+        const crashFill = document.getElementById('crash-fill');
+
+        function startBugGame() {
+            if (bugActive) return;
+            bugActive = true;
+            bugScore = 0;
+            crashLevel = 0;
+            bugScoreEl.innerText = bugScore;
+            crashFill.style.width = '0%';
+            startBugBtn.style.display = 'none';
+            bugArea.innerHTML = '<div class="crash-bar"><div class="crash-fill" id="crash-fill"></div></div>';
+            
+            const newCrashFill = document.getElementById('crash-fill');
+            newCrashFill.style.width = '0%';
+
+            crashInterval = setInterval(() => {
+                if (!bugActive) return;
+                crashLevel += 2;
+                newCrashFill.style.width = Math.min(crashLevel, 100) + '%';
+                if (crashLevel >= 100) {
+                    endBugGame(false);
+                }
+            }, 500);
+
+            bugInterval = setInterval(() => {
+                if (!bugActive) return;
+                spawnBug();
+            }, 800);
+
+            spawnCodeLines();
+        }
+
+        function spawnBug() {
+            const bug = document.createElement('div');
+            bug.className = 'bug';
+            bug.innerText = 'X';
+            
+            const areaRect = bugArea.getBoundingClientRect();
+            const x = Math.random() * (areaRect.width - 30);
+            const y = Math.random() * (areaRect.height - 40) + 20;
+            
+            bug.style.left = x + 'px';
+            bug.style.top = y + 'px';
+
+            bug.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                if (!bugActive) return;
+                bugScore += 10;
+                crashLevel = Math.max(0, crashLevel - 15);
+                bugScoreEl.innerText = bugScore;
+                const currentFill = document.getElementById('crash-fill');
+                if (currentFill) currentFill.style.width = crashLevel + '%';
+                bug.remove();
+            });
+
+            bugArea.appendChild(bug);
+
+            setTimeout(() => {
+                if (bug.parentNode) {
+                    bug.remove();
+                }
+            }, 2000);
+        }
+
+        function spawnCodeLines() {
+            if (!bugActive) return;
+            const line = document.createElement('div');
+            line.className = 'code-line';
+            line.innerText = 'const system = () => { error: 0x' + Math.floor(Math.random()*9999).toString(16) + ' };';
+            line.style.left = Math.random() * 80 + '%';
+            line.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            bugArea.appendChild(line);
+
+            setTimeout(() => {
+                if (line.parentNode) line.remove();
+            }, 3000);
+
+            if (bugActive) {
+                setTimeout(spawnCodeLines, 500);
+            }
+        }
+
+        function endBugGame(win) {
+            bugActive = false;
+            clearInterval(bugInterval);
+            clearInterval(crashInterval);
+            startBugBtn.style.display = 'block';
+            startBugBtn.innerText = currentLang === 'ru' ? 'Играть снова' : currentLang === 'en' ? 'Play Again' : 'Jugar de nuevo';
+            alert(currentLang === 'ru' ? 'Игра окончена! Твой счет: ' + bugScore : currentLang === 'en' ? 'Game Over! Your score: ' + bugScore : '¡Juego terminado! Tu puntuación: ' + bugScore);
+        }
+
+        startBugBtn.addEventListener('click', startBugGame);
+
+        setLanguage('ru');
+    </script>
 </body>
 </html>
