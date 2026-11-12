@@ -1,3 +1,200 @@
+/* ============ WEBGL SHADER BACKGROUND ============ */
+(function initShader() {
+  const canvas = document.getElementById('shader-canvas');
+  if (!canvas) return;
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) {
+    // WebGL недоступен — показываем fallback, выходим
+    canvas.style.display = 'none';
+    return;
+  }
+
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const vertSrc = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
+
+  const fragSrc = `
+    precision highp float;
+    uniform vec2 u_res;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+
+    // 2D hash + noise
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    }
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(
+        mix(hash(i + vec2(0.0,0.0)), hash(i + vec2(1.0,0.0)), u.x),
+        mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x),
+        u.y
+      );
+    }
+    float fbm(vec2 p) {
+      float v = 0.0;
+      float a = 0.5;
+      for (int i = 0; i < 5; i++) {
+        v += a * noise(p);
+        p *= 2.05;
+        a *= 0.5;
+      }
+      return v;
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / u_res.xy;
+      vec2 p = (gl_FragCoord.xy * 2.0 - u_res.xy) / min(u_res.x, u_res.y);
+
+      // мышь в нормализованных координатах
+      vec2 m = (u_mouse * 2.0 - 1.0);
+      m.x *= u_res.x / min(u_res.x, u_res.y);
+      m.y *= u_res.y / min(u_res.x, u_res.y);
+
+      float t = u_time * 0.18;
+
+      // искажение от мыши
+      float distToMouse = length(p - m);
+      float mousePull = exp(-distToMouse * 1.6) * 0.35;
+
+      // слоистый fbm
+      vec2 q = vec2(0.0);
+      q.x = fbm(p * 1.4 + vec2(t, 0.0));
+      q.y = fbm(p * 1.4 + vec2(0.0, t));
+
+      vec2 r = vec2(0.0);
+      r.x = fbm(p * 1.8 + 4.0 * q + vec2(t * 1.2, t * 0.7));
+      r.y = fbm(p * 1.8 + 4.0 * q + vec2(t * 0.7, t * 1.1));
+
+      float f = fbm(p + r + mousePull);
+
+      // палитра — тёмно-синий → голубой → циан
+      vec3 c1 = vec3(0.01, 0.02, 0.05); // почти чёрный
+      vec3 c2 = vec3(0.00, 0.10, 0.28); // глубокий синий
+      vec3 c3 = vec3(0.00, 0.55, 0.95); // голубой
+      vec3 c4 = vec3(0.00, 0.90, 1.00); // циан
+
+      vec3 col = mix(c1, c2, smoothstep(0.0, 1.0, f));
+      col = mix(col, c3, smoothstep(0.35, 0.85, f + 0.2 * r.x));
+      col = mix(col, c4, smoothstep(0.75, 1.1, f + 0.4 * q.x) * 0.7);
+
+      // лёгкий ореол вокруг мыши
+      col += vec3(0.0, 0.5, 0.9) * mousePull * 0.6;
+
+      // виньетка
+      float vig = 1.0 - smoothstep(0.6, 1.5, length(p));
+      col *= vig;
+
+      // очень лёгкий «звёздный» шум
+      float grain = hash(gl_FragCoord.xy + u_time * 60.0) * 0.04;
+      col += grain;
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  function compile(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.warn('Shader compile error:', gl.getShaderInfoLog(s));
+      return null;
+    }
+    return s;
+  }
+
+  const vs = compile(gl.VERTEX_SHADER, vertSrc);
+  const fs = compile(gl.FRAGMENT_SHADER, fragSrc);
+  if (!vs || !fs) {
+    canvas.style.display = 'none';
+    return;
+  }
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    console.warn('Program link error:', gl.getProgramInfoLog(prog));
+    canvas.style.display = 'none';
+    return;
+  }
+  gl.useProgram(prog);
+
+  // fullscreen quad
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1,  1, -1, -1, 1,
+    -1,  1,  1, -1,  1, 1
+  ]), gl.STATIC_DRAW);
+
+  const posLoc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  let mouse = { x: 0.5, y: 0.5 };
+  let targetMouse = { x: 0.5, y: 0.5 };
+
+  window.addEventListener('mousemove', (e) => {
+    targetMouse.x = e.clientX / window.innerWidth;
+    targetMouse.y = 1.0 - e.clientY / window.innerHeight;
+  });
+
+  const start = performance.now();
+  let raf;
+
+  function render() {
+    // плавно подтягиваем мышь
+    mouse.x += (targetMouse.x - mouse.x) * 0.05;
+    mouse.y += (targetMouse.y - mouse.y) * 0.05;
+
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.uniform1f(uTime, (performance.now() - start) / 1000.0);
+    gl.uniform2f(uMouse, mouse.x, mouse.y);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    raf = requestAnimationFrame(render);
+  }
+
+  // при первом кадре показываем плавно
+  requestAnimationFrame(() => {
+    canvas.classList.add('ready');
+    // и прячем старый fallback, чтоб не тратить CPU
+    const fallback = document.getElementById('bg-canvas');
+    if (fallback) fallback.classList.add('hidden');
+    render();
+  });
+
+  // пауза когда таб неактивен (экономит батарею)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      cancelAnimationFrame(raf);
+    } else {
+      render();
+    }
+  });
+})();
 /* ============ CUSTOM CURSOR ============ */
 const cursorDot = document.querySelector('.cursor-dot');
 const cursorRing = document.querySelector('.cursor-ring');
@@ -22,69 +219,6 @@ document.querySelectorAll('a, button, input').forEach(el => {
   el.addEventListener('mouseenter', () => cursorRing.classList.add('hover'));
   el.addEventListener('mouseleave', () => cursorRing.classList.remove('hover'));
 });
-
-/* ============ PARTICLE BACKGROUND ============ */
-const bg = document.getElementById('bg-canvas');
-const bctx = bg.getContext('2d');
-let particles = [];
-let pmx = window.innerWidth / 2, pmy = window.innerHeight / 2;
-
-function resizeBg() {
-  bg.width = window.innerWidth;
-  bg.height = window.innerHeight;
-}
-resizeBg();
-window.addEventListener('resize', resizeBg);
-
-document.addEventListener('mousemove', e => { pmx = e.clientX; pmy = e.clientY; });
-
-for (let i = 0; i < 90; i++) {
-  particles.push({
-    x: Math.random() * bg.width,
-    y: Math.random() * bg.height,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
-    r: Math.random() * 1.6 + 0.4
-  });
-}
-
-function drawParticles() {
-  bctx.clearRect(0, 0, bg.width, bg.height);
-  for (let i = 0; i < particles.length; i++) {
-    const p = particles[i];
-    p.x += p.vx; p.y += p.vy;
-    if (p.x < 0 || p.x > bg.width) p.vx *= -1;
-    if (p.y < 0 || p.y > bg.height) p.vy *= -1;
-
-    const dx = p.x - pmx, dy = p.y - pmy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const near = dist < 160;
-
-    bctx.beginPath();
-    bctx.arc(p.x, p.y, p.r + (near ? 1.2 : 0), 0, Math.PI * 2);
-    bctx.fillStyle = near ? 'rgba(0,229,255,0.9)' : 'rgba(0,180,255,0.5)';
-    bctx.shadowBlur = near ? 14 : 6;
-    bctx.shadowColor = '#00e5ff';
-    bctx.fill();
-    bctx.shadowBlur = 0;
-
-    for (let j = i + 1; j < particles.length; j++) {
-      const q = particles[j];
-      const dx2 = p.x - q.x, dy2 = p.y - q.y;
-      const d = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-      if (d < 110) {
-        bctx.strokeStyle = `rgba(0,180,255,${0.14 - d / 900})`;
-        bctx.lineWidth = 0.5;
-        bctx.beginPath();
-        bctx.moveTo(p.x, p.y);
-        bctx.lineTo(q.x, q.y);
-        bctx.stroke();
-      }
-    }
-  }
-  requestAnimationFrame(drawParticles);
-}
-drawParticles();
 
 /* ============ PRELOADER ============ */
 const preloader = document.getElementById('preloader');
@@ -156,16 +290,42 @@ function applyLang(lang) {
   });
   document.documentElement.lang = lang === 'es' ? 'es' : lang;
   startTerminal();
+  window.dispatchEvent(new Event('langchange'));
 }
 document.querySelectorAll('.lang-switch button').forEach(b => {
   b.addEventListener('click', () => applyLang(b.dataset.lang));
 });
 
-/* ============ REVEAL ============ */
+/* ============ REVEAL + GLITCH ============ */
 const observer = new IntersectionObserver(entries => {
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      // если это заголовок секции — запускаем глитч
+      if (e.target.classList.contains('section-title')) {
+        triggerGlitch(e.target);
+      }
+    }
+  });
 }, { threshold: 0.15 });
-document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+document.querySelectorAll('.reveal, .section-title').forEach(el => observer.observe(el));
+
+function triggerGlitch(el) {
+  // обновляем data-text на случай смены языка
+  el.setAttribute('data-text', el.textContent);
+  el.classList.remove('glitch');
+  void el.offsetWidth; // рефлоу чтоб анимация перезапустилась
+  el.classList.add('glitch');
+  setTimeout(() => el.classList.remove('glitch'), 450);
+}
+
+// при смене языка — обновить data-text у заголовков
+window.addEventListener('langchange', () => {
+  document.querySelectorAll('.section-title').forEach(el => {
+    el.setAttribute('data-text', el.textContent);
+  });
+});
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
