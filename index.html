@@ -14,7 +14,9 @@
 <div class="cursor-dot"></div>
 <div class="cursor-ring"></div>
 
-<!-- Background canvas -->
+<!-- Shader background -->
+<canvas id="shader-canvas"></canvas>
+<!-- Fallback particles (если WebGL нет) -->
 <canvas id="bg-canvas"></canvas>
 <div class="grid-overlay"></div>
 <div class="scanlines"></div>
@@ -54,7 +56,11 @@
   <div class="hero-glow"></div>
   <div class="hero-content">
     <div class="hero-tag" data-i18n="hero_tag">// SYSTEM ONLINE</div>
+    <div class="hero-avatar-wrap">
+    <div class="hero-avatar-wrap">
     <img class="hero-avatar" src="avatar.png" alt="s1ivker" />
+    </div>
+    </div>
     <h1 class="hero-name" data-glitch="S1IVKER">S1IVKER</h1>
     <div class="terminal">
       <span class="term-prompt">&gt;</span>
@@ -76,7 +82,7 @@
 <section id="about" class="section">
   <div class="section-head">
     <div class="section-num">01</div>
-    <h2 class="section-title" data-i18n="about_title">WHO AM I</h2>
+    <h2 class="section-title" data-i18n="about_title" data-text="WHO AM I">WHO AM I</h2>
   </div>
   <div class="about-grid">
     <div class="about-card reveal" style="--d:0">
@@ -110,7 +116,7 @@
 <section id="projects" class="section">
   <div class="section-head">
     <div class="section-num">02</div>
-    <h2 class="section-title" data-i18n="proj_title">PROJECTS</h2>
+    <h2 class="section-title" data-i18n="proj_title" data-text="PROJECTS">PROJECTS</h2>
   </div>
   <div class="projects-grid">
     <a class="project-card reveal" style="--d:0" href="https://github.com/S1ivker/SCity" target="_blank">
@@ -162,7 +168,7 @@
 <section id="games" class="section">
   <div class="section-head">
     <div class="section-num">03</div>
-    <h2 class="section-title" data-i18n="games_title">MINI-GAMES</h2>
+    <h2 class="section-title" data-i18n="games_title" data-text="MINI-GAMES">MINI-GAMES</h2>
   </div>
   <div class="games-grid">
     <div class="game-card reveal" style="--d:0">
@@ -197,7 +203,7 @@
 <section id="contact" class="section">
   <div class="section-head">
     <div class="section-num">04</div>
-    <h2 class="section-title" data-i18n="contact_title">CONTACT</h2>
+    <h2 class="section-title" data-i18n="contact_title" data-text="CONTACT">CONTACT</h2>
   </div>
   <div class="contact-box reveal">
     <div class="card-corner"></div>
